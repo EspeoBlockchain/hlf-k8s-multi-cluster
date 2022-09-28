@@ -4,7 +4,7 @@
 
 * fabcar-js - chaincode written in javascript, borrowed from fabric-samples
 * script - automatic script that does everything for you, more information inside the folder
-* webinar-notes - notes shown during the webinar that happened
+* webinar-notes - notes and presentation shown during the webinar
 * freenom.md - guide to get free domains from the website
 * readme.md - webinar-notes condensed into a single file
 
