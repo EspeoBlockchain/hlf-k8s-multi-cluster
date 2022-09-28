@@ -1,0 +1,636 @@
+
+export KUBECONFIG=$HOME/.kube/hlf-ams-kubeconfig.yaml
+
+kubectl cluster-info
+
+
+istioctl install -y
+
+
+helm repo add kfs https://kfsoftware.github.io/hlf-helm-charts --force-update
+
+helm install hlf-operator --version=1.6.0 kfs/hlf-operator
+
+
+kubectl --namespace=default get pods
+kubectl --namespace=istio-system get pods
+
+kubectl get svc istio-ingressgateway -n istio-system
+
+
+dig peer0.hlf-ams.tk +short
+dig peer0.hlf-fra.tk +short
+dig ord1.hlf-ord.tk +short
+dig ord2.hlf-ord.tk +short
+
+
+mkdir -p resources/{org1,org2,orderer}
+
+kubectl get storageclass
+
+kubectl hlf ca create \
+    --storage-class do-block-storage \
+    --capacity 1Gi \
+    --name org1-ca \
+    --enroll-id enroll \
+    --enroll-pw enrollpw \
+    --output > resources/org1/ca.yaml
+kubectl apply -f resources/org1/ca.yaml
+
+kubectl hlf ca create \
+    --storage-class do-block-storage \
+    --capacity 1Gi \
+    --name ord-ca \
+    --enroll-id enroll \
+    --enroll-pw enrollpw \
+    --hosts ord-ca.hlf-ord.tk \
+    --output > resources/orderer/ca.yaml
+kubectl apply -f resources/orderer/ca.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl wait --timeout 180s --for condition=Running fabriccas.hlf.kungfusoftware.es --all
+
+kubectl get pods
+
+
+
+kubectl hlf ca register \
+    --name org1-ca \
+    --user peer0 \
+    --secret peer0pw \
+    --type peer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org1MSP
+kubectl hlf peer create \
+    --storage-class do-block-storage \
+    --enroll-id peer0 \
+    --enroll-pw peer0pw \
+    --mspid Org1MSP \
+    --capacity 2Gi \
+    --name peer0-ams \
+    --ca-name org1-ca.default \
+    --hosts peer0.hlf-ams.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/org1/peer0.yaml
+kubectl apply -f resources/org1/peer0.yaml
+
+kubectl hlf ca register \
+    --name org1-ca \
+    --user peer1 \
+    --secret peer1pw \
+    --type peer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org1MSP
+kubectl hlf peer create \
+    --storage-class do-block-storage \
+    --enroll-id peer1 \
+    --enroll-pw peer1pw \
+    --mspid Org1MSP \
+    --capacity 2Gi \
+    --name peer1-ams \
+    --ca-name org1-ca.default \
+    --hosts peer1.hlf-ams.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/org1/peer1.yaml
+kubectl apply -f resources/org1/peer1.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ca register \
+    --name ord-ca \
+    --user orderer1 \
+    --secret orderer1pw \
+    --type orderer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid OrdererMSP
+kubectl hlf ordnode create \
+    --storage-class do-block-storage \
+    --enroll-id orderer1 \
+    --mspid OrdererMSP \
+    --enroll-pw orderer1pw \
+    --capacity 1Gi \
+    --name ord1-node \
+    --ca-name ord-ca.default \
+    --hosts ord1.hlf-ord.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/orderer/orderer1.yaml
+kubectl apply -f resources/orderer/orderer1.yaml
+
+
+kubectl hlf ca register \
+    --name ord-ca \
+    --user orderer2 \
+    --secret orderer2pw \
+    --type orderer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid OrdererMSP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl wait --timeout 180s --for condition=Running fabricpeers.hlf.kungfusoftware.es --all
+kubectl wait --timeout 180s --for condition=Running fabricorderernodes.hlf.kungfusoftware.es --all
+kubectl get pods
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf inspect \
+    --output org1-config.yaml \
+    --organizations Org1MSP
+kubectl hlf ca register \
+    --name org1-ca \
+    --user admin \
+    --secret adminpw \
+    --type admin \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org1MSP
+kubectl hlf ca enroll \
+    --name org1-ca \
+    --user admin \
+    --secret adminpw \
+    --mspid Org1MSP \
+    --ca-name ca \
+    --output org1-admin.yaml
+kubectl hlf utils adduser \
+    --userPath org1-admin.yaml \
+    --config org1-config.yaml \
+    --username admin \
+    --mspid Org1MSP
+
+kubectl hlf inspect \
+    --output orderer1-config.yaml \
+    --organizations OrdererMSP
+kubectl hlf ca register \
+    --name ord-ca \
+    --user admin1 \
+    --secret admin1pw \
+    --type admin \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid OrdererMSP
+kubectl hlf ca enroll \
+    --name ord-ca \
+    --user admin1 \
+    --secret admin1pw \
+    --mspid OrdererMSP \
+    --ca-name ca \
+    --output orderer1-admin.yaml
+kubectl hlf utils adduser \
+    --userPath orderer1-admin.yaml \
+    --config orderer1-config.yaml \
+    --username admin1 \
+    --mspid OrdererMSP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ca register \
+    --name ord-ca \
+    --user admin2 \
+    --secret admin2pw \
+    --type admin \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid OrdererMSP
+kubectl hlf ca enroll \
+    --name ord-ca \
+    --user admin2 \
+    --secret admin2pw \
+    --mspid OrdererMSP \
+    --ca-name ca \
+    --output orderer2-admin.yaml
+
+
+
+
+
+
+
+
+
+
+export KUBECONFIG=$HOME/.kube/hlf-ams-kubeconfig.yaml
+
+kubectl hlf chaincode install \
+    --path ./fabcar-js/ \
+    --config org1-config.yaml \
+    --language node \
+    --label fabcar \
+    --user admin \
+    --peer peer0-ams.default
+kubectl hlf chaincode install \
+    --path ./fabcar-js/ \
+    --config org1-config.yaml \
+    --language node \
+    --label fabcar \
+    --user admin \
+    --peer peer1-ams.default
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf channel generate \
+    --output demo.block \
+    --name demo \
+    --organizations Org1MSP \
+    --organizations Org2MSP \
+    --ordererOrganizations OrdererMSP
+
+kubectl hlf channel generate \
+    --output demo.block \
+    --name demo \
+    --organizations Org1MSP \
+    --ordererOrganizations OrdererMSP
+
+kubectl hlf ca enroll \
+    --name ord-ca \
+    --namespace default \
+    --user admin1 \
+    --secret admin1pw \
+    --mspid OrdererMSP \
+    --ca-name tlsca \
+    --output orderer1-admin-tls.yaml
+kubectl hlf ordnode join \
+    --block demo.block \
+    --name ord1-node \
+    --namespace default \
+    --identity orderer1-admin-tls.yaml
+
+
+
+kubectl hlf channel join \
+    --name demo \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default
+kubectl hlf channel join \
+    --name demo \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer1-ams.default
+kubectl hlf channel addanchorpeer \
+    --channel demo \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default
+
+kubectl hlf channel top \
+    --channel demo \
+    --config org1-config.yaml \
+    --peer peer0-ams.default \
+    --user admin
+
+
+
+
+
+
+
+kubectl hlf channel addorg \
+    --peer peer0-ams.default \
+    --name demo \
+    --config org1-config.yaml \
+    --user admin \
+    --msp-id Org2MSP \
+    --org-config resources/org2/configtx.yaml
+
+kubectl hlf ca enroll \
+    --name ord-ca \
+    --namespace default \
+    --user admin2 \
+    --secret admin2pw \
+    --mspid OrdererMSP \
+    --ca-name tlsca \
+    --output orderer2-admin-tls.yaml
+
+
+
+
+
+
+
+
+
+export PATH=$PATH:$PWD/bin
+
+kubectl hlf channel inspect \
+    --channel demo \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default > demo_original.json
+configtxlator proto_encode \
+    --input demo_original.json \
+    --type common.Config \
+    --output config.pb
+
+cp ./demo_original.json ./demo_update.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+configtxlator proto_encode \
+    --input demo_update.json \
+    --type common.Config \
+    --output modified_config.pb
+configtxlator compute_update \
+    --channel_id demo \
+    --original config.pb \
+    --updated modified_config.pb \
+    --output config_update.pb
+configtxlator proto_decode \
+    --input config_update.pb \
+    --type common.ConfigUpdate \
+    --output config_update.json
+
+echo '{"payload":{"header":{"channel_header":{"channel_id":"'demo'", "type":2}},"data":{"config_update":'$(cat config_update.json)'}}}' | jq . > config_update_in_envelope.json
+
+configtxlator proto_encode \
+    --input config_update_in_envelope.json \
+    --type common.Envelope \
+    --output config_update_in_envelope.pb
+
+
+kubectl hlf channel signupdate \
+    --channel demo \
+    -f config_update_in_envelope.pb \
+    --user admin1 \
+    --config orderer1-config.yaml \
+    --mspid OrdererMSP \
+    --output ord-demo-update-sign.pb
+
+REPLACE LAST "peer" IN orderer1-config.yaml TO {}
+
+kubectl hlf channel signupdate \
+    --channel demo \
+    -f config_update_in_envelope.pb \
+    --user admin1 \
+    --config orderer1-config.yaml \
+    --mspid OrdererMSP \
+    --output ord-demo-update-sign.pb
+
+kubectl hlf channel update \
+    --channel demo \
+    -f config_update_in_envelope.pb \
+    --config org1-config.yaml \
+    --user admin \
+    --mspid Org1MSP \
+    --signatures ord-demo-update-sign.pb
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export CC_PACKAGE_ID=fabcar:f0e6793d8f47a00fbbd6cc2cb4fe1a47279c22227790ca3ac6f8a340b1733654
+
+kubectl hlf chaincode queryinstalled \
+    --config org1-config.yaml \
+    --peer peer0-ams.default \
+    --user admin
+
+kubectl hlf chaincode queryapproved \
+    --config org1-config.yaml \
+    --peer peer0-ams.default \
+    --user admin \
+    --channel demo \
+    --chaincode fabcar
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf chaincode approveformyorg \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default \
+    --package-id=${CC_PACKAGE_ID} \
+    --version 1.0 \
+    --sequence 1 \
+    --name fabcar \
+    --policy 'AND('\''Org1MSP.member'\'','\''Org2MSP.member'\'')' \
+    --channel demo
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf chaincode commit \
+    --config org1-config.yaml \
+    --mspid Org1MSP \
+    --user admin \
+    --version 1.0 \
+    --sequence 1 \
+    --name fabcar \
+    --policy 'AND('\''Org1MSP.member'\'','\''Org2MSP.member'\'')' \
+    --channel demo
+
+
+kubectl hlf chaincode invoke \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default \
+    --chaincode fabcar \
+    --channel demo \
+    --fcn initLedger -a '[]'
+
+kubectl hlf chaincode invoke \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default \
+    --chaincode fabcar \
+    --channel demo \
+    --fcn createCar \
+    --args 'CAR10' \
+    --args 'Mazda' \
+    --args 'MX5' \
+    --args 'black' \
+    --args 'Marcin'
+
+
+kubectl hlf chaincode query \
+    --config org1-config.yaml \
+    --user admin \
+    --peer peer0-ams.default \
+    --chaincode fabcar \
+    --channel demo \
+    --fcn queryCar \
+    --args 'CAR11' | jq
+
+
+kubectl delete fabricorderingservices.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabricpeers.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabriccas.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabricorderernodes.hlf.kungfusoftware.es --all-namespaces --all

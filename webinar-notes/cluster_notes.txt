@@ -1,0 +1,633 @@
+ENVIRONMENT PREPARATION
+Cluster connection
+
+
+
+
+Istio installation
+
+
+HLF Operator installation
+
+
+
+
+Verify installation
+
+
+See public IP
+
+
+Verify DNS
+
+
+
+
+DEPLOYING CAs
+Manifest subfolders
+
+Get cluster storage class
+
+Create org1 CA Manifest
+
+
+
+
+
+
+Apply org1 CA manifest
+
+Create orderer CA manifest
+
+
+
+
+
+
+
+Apply orderer CA manifest
+
+Create org2 CA manifest
+
+
+
+
+
+
+Apply org2 CA manifest
+
+
+
+Wait for CAs to be deployed
+
+See if the pods are running
+
+
+DEPLOYING PEERS
+Registering peer0 org1 user on org1 CA
+
+
+
+
+
+
+
+Creating peer0 org1 manifest
+
+
+
+
+
+
+
+
+
+
+
+Applying peer0 org1 manifest
+
+Registering peer1 org1 user on org1 CA
+
+
+
+
+
+
+
+Creating peer1 org1 manifest
+
+
+
+
+
+
+
+
+
+
+
+Applying peer1 org1 manifest
+
+Registering peer0 org2 user on org2 CA
+
+
+
+
+
+
+
+Creating peer0 org2 manifest
+
+
+
+
+
+
+
+
+
+
+
+Applying peer0 org2 manifest
+
+Registering peer1 org2 user on org2 CA
+
+
+
+
+
+
+
+Creating peer1 org2 manifest
+
+
+
+
+
+
+
+
+
+
+
+Applying peer1 org2 manifest
+DEPLOYING ORDERERS
+Registering orderer1 user on orderer CA 
+
+
+
+
+
+
+
+Creating orderer1 manifest
+
+
+
+
+
+
+
+
+
+
+
+Applying orderer1 manifest
+
+
+Registering orderer2 user on orderer CA 
+
+
+
+
+
+
+
+
+Creating orderer2 manifest fail - ord-ca not found
+
+
+
+
+
+
+
+
+
+
+
+
+
+Creating orderer2 manifest (temporarily using org2 CA to generate the config)
+
+
+
+
+
+
+
+
+
+
+
+
+Modifying orderer2 manifest to use orderer CA
+
+
+
+
+
+
+
+
+
+
+
+Applying orderer1 manifest
+
+
+Wait for peers and orderers to be deployed
+
+
+
+
+
+GENERATING ADMIN CONNECTION FILES
+Get org1 config file
+
+
+Register admin user for org1
+
+
+
+
+
+
+
+Enroll admin user for org1
+
+
+
+
+
+
+Add admin user to org1 config file
+
+
+
+
+
+Get orderer org config file
+
+
+Register admin user for orderer1
+
+
+
+
+
+
+
+Enroll admin user for orderer1
+
+
+
+
+
+
+Add admin user to orderer1 config file
+
+
+
+
+
+Get org2 config file
+
+
+Register admin user for org2
+
+
+
+
+
+
+
+Enroll admin user for org2
+
+
+
+
+
+
+Add admin user to org2 config file
+
+
+
+
+
+(not necessary for demo)
+Register admin user for orderer2
+
+
+
+
+
+
+
+Enroll admin user for orderer2
+
+
+
+
+
+Get orderer2 config file
+
+
+Add admin user to orderer2 config file
+
+
+
+
+
+
+INSTALLING CHAINCODE
+Cluster connection for another terminal
+
+Installing chaincode on peer0 org1
+
+
+
+
+
+
+Installing chaincode on peer1 org1
+
+
+
+
+
+
+
+Cluster connection for another terminal
+
+Installing chaincode on peer0 org2
+
+
+
+
+
+
+Installing chaincode on peer1 org2
+
+
+
+
+
+
+
+CHANNEL CREATION
+Generating genesis block
+
+
+
+
+
+
+
+
+
+
+
+
+Enrolling tls admin user for orderer1
+
+
+
+
+
+
+
+Joining orderer1 to the channel
+
+
+
+
+
+
+
+Joining peer0 org1 to the channel
+
+
+
+
+Joining peer1 org1 to the channel
+
+
+
+
+Setting peer0 org1 as an anchor peer
+
+
+
+
+
+
+
+
+
+
+Fetching org2 config
+
+
+
+
+Adding org2 to the channel
+
+
+
+
+
+
+Enrolling tls admin user for orderer2
+
+
+
+
+
+
+
+Joining orderer2 to the channel
+
+
+
+
+
+
+
+EDITING CHANNEL CONFIG
+Adding fabric binaries to the PATH
+
+Fetching channel configuration
+
+
+
+
+Encoding channel configuration for later
+
+
+
+
+Making a copy of channel json config file
+
+Making changes to the config
+
+
+
+
+
+
+
+
+Getting ORD2 tls certificate to put in channel config
+
+
+Encoding modified channel config
+
+
+
+Computing differences between the files
+
+
+
+
+Decoding channel update transaction
+
+
+
+
+Adjusting json format of the update
+
+Encoding channel update transaction
+
+
+
+
+
+Signing update as orderer1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Submitting channel update transaction
+
+
+
+
+
+
+
+Joining peer0 org2 to the channel
+
+
+
+
+Joining peer1 org2 to the channel
+
+
+
+
+Setting peer0 org2 as an anchor peer
+
+
+
+
+
+FINISHING CHAINCODE INSTALLATION
+Exporting chaincode package id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Approving chaincode for org1
+
+
+
+
+
+
+
+
+
+
+
+Approving chaincode for org2
+
+
+
+
+
+
+
+
+
+Committing the chaincode
+
+
+
+
+
+
+
+
+
+
+Invoking init function
+
+
+
+
+
+
+
+Invoking chaincode function on peer0 org1
+
+
+
+
+
+
+
+
+
+
+
+
+
+Querying previously created objects
+
+
+
+
+
+
+
+
+
+Cleanup

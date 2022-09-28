@@ -1,0 +1,638 @@
+
+export KUBECONFIG=$HOME/.kube/hlf-fra-kubeconfig.yaml
+
+kubectl cluster-info
+
+
+istioctl install -y
+
+
+helm repo add kfs https://kfsoftware.github.io/hlf-helm-charts --force-update
+
+helm install hlf-operator --version=1.6.0 kfs/hlf-operator
+
+
+kubectl --namespace=default get pods
+kubectl --namespace=istio-system get pods
+
+kubectl get svc istio-ingressgateway -n istio-system
+
+
+dig peer0.hlf-ams.tk +short
+dig peer0.hlf-fra.tk +short
+dig ord1.hlf-ord.tk +short
+dig ord2.hlf-ord.tk +short
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ca create \
+    --storage-class do-block-storage \
+    --capacity 1Gi \
+    --name org2-ca \
+    --enroll-id enroll \
+    --enroll-pw enrollpw \
+    --output > resources/org2/ca.yaml
+kubectl apply -f resources/org2/ca.yaml
+
+
+
+kubectl wait --timeout 180s --for condition=Running fabriccas.hlf.kungfusoftware.es --all
+
+kubectl get pods
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ca register \
+    --name org2-ca \
+    --user peer0 \
+    --secret peer0pw \
+    --type peer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org2MSP
+kubectl hlf peer create \
+    --storage-class do-block-storage \
+    --enroll-id peer0 \
+    --enroll-pw peer0pw \
+    --mspid Org2MSP \
+    --capacity 2Gi \
+    --name peer0-fra \
+    --ca-name org2-ca.default \
+    --hosts peer0.hlf-fra.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/org2/peer0.yaml
+kubectl apply -f resources/org2/peer0.yaml
+
+kubectl hlf ca register \
+    --name org2-ca \
+    --user peer1 \
+    --secret peer1pw \
+    --type peer \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org2MSP
+kubectl hlf peer create \
+    --storage-class do-block-storage \
+    --enroll-id peer1 \
+    --enroll-pw peer1pw \
+    --mspid Org2MSP \
+    --capacity 2Gi \
+    --name peer1-fra \
+    --ca-name org2-ca.default \
+    --hosts peer1.hlf-fra.tk  \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/org2/peer1.yaml
+kubectl apply -f resources/org2/peer1.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ordnode create \
+    --storage-class do-block-storage \
+    --enroll-id orderer2 \
+    --mspid OrdererMSP \
+    --enroll-pw orderer2pw \
+    --capacity 1Gi \
+    --name ord2-node \
+    --ca-name ord-ca.default \
+    --hosts ord2.hlf-ord.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/orderer/orderer2.yaml
+
+
+kubectl hlf ordnode create \
+    --storage-class do-block-storage \
+    --enroll-id orderer2 \
+    --mspid OrdererMSP \
+    --enroll-pw orderer2pw \
+    --capacity 1Gi \
+    --name ord2-node \
+    --ca-name org2-ca.default \
+    --hosts ord2.hlf-ord.tk \
+    --istio-ingressgateway ingressgateway \
+    --istio-port 443 \
+    --output > resources/orderer/orderer2.yaml
+
+...enrollment.component.cahost = ord-ca.hlf-ord.tk
+...enrollment.tls.cahost = ord-ca.hlf-ord.tk
+...enrollment.tls.csr.hosts += ord-ca.hlf-ord.tk
+
+...enrollment.component.caport = 443
+...enrollment.tls.caport = 443
+
+...enrollment.component.catls.cacert =
+...enrollment.tls.catls.cacert =
+    spec.secret.enrollment.component.catls.cacert from orderer1.yaml
+
+
+kubectl apply -f resources/orderer/orderer2.yaml
+
+
+kubectl wait --timeout 180s --for condition=Running fabricpeers.hlf.kungfusoftware.es --all
+kubectl wait --timeout 180s --for condition=Running fabricorderernodes.hlf.kungfusoftware.es --all
+kubectl get pods
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ca register \
+    --name org2-ca \
+    --user admin \
+    --secret adminpw \
+    --type admin \
+    --enroll-id enroll \
+    --enroll-secret enrollpw \
+    --mspid Org2MSP
+kubectl hlf ca enroll \
+    --name org2-ca \
+    --user admin \
+    --secret adminpw \
+    --mspid Org2MSP \
+    --ca-name ca \
+    --output org2-admin.yaml
+kubectl hlf inspect \
+    --output org2-config.yaml \
+    --organizations Org2MSP
+kubectl hlf utils adduser \
+    --userPath org2-admin.yaml \
+    --config org2-config.yaml \
+    --username admin \
+    --mspid Org2MSP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf inspect \
+    --output orderer2-config.yaml \
+    --organizations OrdererMSP
+kubectl hlf utils adduser \
+    --userPath orderer2-admin.yaml \
+    --config orderer2-config.yaml \
+    --username admin2 \
+    --mspid OrdererMSP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export KUBECONFIG=$HOME/.kube/hlf-fra-kubeconfig.yaml
+
+kubectl hlf chaincode install \
+    --path ./fabcar-js/ \
+    --config org2-config.yaml \
+    --language node \
+    --label fabcar \
+    --user admin \
+    --peer peer0-fra.default
+kubectl hlf chaincode install \
+    --path ./fabcar-js/ \
+    --config org2-config.yaml \
+    --language node \
+    --label fabcar \
+    --user admin \
+    --peer peer1-fra.default
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf org inspect -o Org2MSP --output-path ./resources/org2
+mv ./configtx.yaml ./resources/org2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf ordnode join \
+    --block demo.block \
+    --name ord2-node \
+    --namespace default \
+    --identity orderer2-admin-tls.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...Endpoints.value.addresses += ord2.hlf-ord.tk:443
+...ConsensusType.value.metadata.consenters[1] += {
+    "host": "ord2.hlf-ord.tk:443",
+    "port": 443,
+    "client_tls_cert": "$ORD2_CERT",
+    "server_tls_cert": "$ORD2_CERT"
+}
+
+kubectl get pods
+ORD2_CERT=$(kubectl exec -it ord2-node-df979d689-hm4s5 -- cat /var/hyperledger/tls/server/pair/tls.crt | sed -e 's/\r//g' | base64)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf channel join \
+    --name demo \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer0-fra.default
+kubectl hlf channel join \
+    --name demo \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer1-fra.default
+kubectl hlf channel addanchorpeer \
+    --channel demo \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer0-fra.default
+
+
+export CC_PACKAGE_ID=
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf chaincode queryinstalled \
+    --config org1-config.yaml \
+    --peer peer0-ams.default \
+    --user admin
+
+kubectl hlf chaincode queryapproved \
+    --config org1-config.yaml \
+    --peer peer0-ams.default \
+    --user admin \
+    --channel demo \
+    --chaincode fabcar
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf chaincode approveformyorg \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer0-fra.default \
+    --package-id=${CC_PACKAGE_ID} \
+    --version 1.0 \
+    --sequence 1 \
+    --name fabcar \
+    --policy 'AND('\''Org1MSP.member'\'','\''Org2MSP.member'\'')' \
+    --channel demo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kubectl hlf chaincode invoke \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer0-fra.default \
+    --chaincode fabcar \
+    --channel demo \
+    --fcn createCar \
+    --args 'CAR11' \
+    --args 'Seat' \
+    --args 'Leon' \
+    --args 'black' \
+    --args 'Szymon'
+
+
+kubectl hlf chaincode query \
+    --config org2-config.yaml \
+    --user admin \
+    --peer peer0-fra.default \
+    --chaincode fabcar \
+    --channel demo \
+    --fcn queryCar \
+    --args 'CAR10' | jq
+
+
+kubectl delete fabricorderingservices.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabricpeers.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabriccas.hlf.kungfusoftware.es --all-namespaces --all
+kubectl delete fabricorderernodes.hlf.kungfusoftware.es --all-namespaces --all
+
+rm -rf *.pb *.public *.yaml *.block *.json keystore msp org2-config peerOrganizations resources 
