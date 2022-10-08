@@ -416,6 +416,9 @@ kubectl hlf chaincode install \
 
 
 
+
+
+
 kubectl hlf org inspect -o Org2MSP --output-path ./resources/org2
 mv ./configtx.yaml ./resources/org2
 
@@ -554,13 +557,13 @@ export CC_PACKAGE_ID=
 
 
 kubectl hlf chaincode queryinstalled \
-    --config org1-config.yaml \
-    --peer peer0-ams.default \
+    --config org2-config.yaml \
+    --peer peer0-fra.default \
     --user admin
 
 kubectl hlf chaincode queryapproved \
-    --config org1-config.yaml \
-    --peer peer0-ams.default \
+    --config org2-config.yaml \
+    --peer peer0-fra.default \
     --user admin \
     --channel demo \
     --chaincode fabcar

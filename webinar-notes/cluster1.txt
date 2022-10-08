@@ -410,6 +410,8 @@ kubectl hlf channel addanchorpeer \
     --user admin \
     --peer peer0-ams.default
 
+export KUBECONFIG=$HOME/.kube/hlf-ams-kubeconfig.yaml
+
 kubectl hlf channel top \
     --channel demo \
     --config org1-config.yaml \

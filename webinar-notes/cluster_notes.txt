@@ -36,7 +36,7 @@ Create org1 CA Manifest
 
 
 Apply org1 CA manifest
-
+ord-ca.hlf-ord.tk
 Create orderer CA manifest
 
 
@@ -406,6 +406,9 @@ Joining peer1 org1 to the channel
 
 
 Setting peer0 org1 as an anchor peer
+
+
+
 
 
 
